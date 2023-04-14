@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+// 消息类型
+enum MessageType
+{  
+   SystemMessage = 0;
+   IMTextMessage = 30001;
+   IMTextMessageAck = 30002;
+}
+
+
+// 包含所有的 XXXCommand 消息; 1开头
+message Command
+{
+   string command = 1;
+}
+
+// 包含所有的Notification消息。 2开头
+message Notification
+{  
+   string notification = 1;
+}
+
+message Message
+{  
+   TextMessage TextMessage = 1; // 文本类消息
+}
+
+// 文本消息
+message TextMessage{
+   string text = 1;
+}
+
+// 消息响应
+message ACK{
+int32 code = 1;
+string message = 2;
+string gmt_created = 3;
+string ori_msg_id = 4;
+bytes data = 5;
+}
+
+
+/* 顶层消息，包含所有的Message，Notification，Command, 具体包含哪个消息由 msg_type字段决定，
+* 程序逻辑去保证msg_type和具体的消息进行匹配 */ 
+message IMMessage 
+{
+   string token = 1;                         // 认证信息
+   MessageType msg_type = 2;                 // 消息类型
+   string msg_id = 3;                        // 消息系列号
+   string version = 4;                       // APP版本号
+   string _from = 5;                         // 发送方id
+   string _to = 6;                           // 接收方id, 群时为@
+   int64 timestamp = 7;                      // 消息时间戳
+   string platform = 8;                      // 设备平台; IOS,  ANDORID
+   optional Command command= 9;              // 系统命令
+   optional Notification notification = 10;  // 通知类消息
+   optional Message message  = 11;           // 普通类消息
+   optional ACK ack = 12;                    // 反馈消息
+}
