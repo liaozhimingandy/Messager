@@ -1,13 +1,12 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 import uuid
-import time
+import datetime
 
 from twisted.application import service
 from twisted.protocols import policies
 from twisted.internet.protocol import connectionDone, ServerFactory
 from twisted.internet import protocol
-
 # from src.server import message_pb2
 
 
@@ -24,7 +23,7 @@ class MessageProtocol(protocol.Protocol, policies.TimeoutMixin):
             self.transport.loseConnection()
             return
 
-        print(f"ip:{self.transport.getPeer().host},port:{self.transport.getPeer().port}......已建立连接;"
+        print(f"{datetime.datetime.now().isoformat(timespec='seconds')}, ip:{self.transport.getPeer().host},port:{self.transport.getPeer().port}......已建立连接;"
               f"目前共{self.factory.numConnections}个连接...")
         self.transport.write("hello".encode("utf8"))
         # ProtobufData(self.transport)
@@ -63,6 +62,8 @@ class MessageFactory(ServerFactory):
 
 class MessageService(service.Service):
 
+    name = "Messager"
+
     def startService(self):
         print(f"完成初始化")
         service.Service.startService(self)
@@ -91,6 +92,16 @@ def handle_command():
 #
 #     data = message.SerializeToString()
 #     transport.write(data)
+if __name__ == "__main__":
+    service = MessageService()
+    factory = MessageFactory(service)
+
+    from twisted.internet import reactor
+    port = 52053
+    print(f"Running Socket AMF gateway on {port}")
+    reactor.listenTCP(port, factory)
+    reactor.run()
+
 
 
 

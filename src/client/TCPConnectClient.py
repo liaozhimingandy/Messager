@@ -1,15 +1,46 @@
+from twisted.internet import reactor
+from twisted.internet.interfaces import IAddress
+from twisted.internet.protocol import Protocol, ClientFactory, ReconnectingClientFactory
+
+
+class ClientProtocol(Protocol):
+    def connectionMade(self):
+        super().connectionMade()
+        self.transport.write("hello".encode('utf-8'))
+
+    def dataReceived(self, data: bytes):
+        print(f"{data.decode('utf-8')}")
+        # self.transport.write("ok".encode("utf-8"))
+        # reactor.stop()
+
+
+class TestClientFactory(ReconnectingClientFactory):
+    """
+    todo: 客户端完成自动重试功能
+    """
+
+    def __init__(self, maxRetries=3) -> None:
+        self.hosts = []
+        self.maxRetries = maxRetries
+        self.resetDelay()
+
+    protocol = ClientProtocol
+
+    def clientConnectionLost(self, connector, unused_reason):
+        print('连接关闭,原因:', unused_reason)
+        self.resetDelay()
+        super().clientConnectionLost(connector, unused_reason)
+
+    def clientConnectionFailed(self, connector, reason):
+        print('Connection failed. Reason:', reason)
+        # 更换备用服务器
+        # connector.host, connector.port = to_try
+        ReconnectingClientFactory.clientConnectionFailed(self, connector,
+                                                         reason)
+
+
 if __name__ == '__main__':
-    cf = EchoClientFactory()
-    chat_from = sys.argv[1]
-    all_phone_numbers = ['000001', '000002', '000003', '000004']
-    all_phone_numbers.remove(chat_from)
-    import random
-    reactor.callLater(3, cf.p.send_verify, chat_from)
-    reactor.callLater(10, cf.p.send_single_chat, chat_from, random.choice(all_phone_numbers), '你好,这是单聊')
-    reactor.callLater(10, cf.p.send_single_chat, chat_from, random.choice(all_phone_numbers), '你好,这是单聊')
-    # reactor.callLater(11, cf.p.send_group_chat, chat_from, [random.choice(all_phone_numbers), random.choice(all_phone_numbers)], '你好,这是组聊')
-    # reactor.callLater(12, cf.p.send_broadcast_chat, chat_from, '你好,这是群聊')
 
-    reactor.connectTCP('127.0.0.1', 8124, cf)
-
+    factory = TestClientFactory()
+    reactor.connectTCP('127.0.0.1', 52053, factory)
     reactor.run()
