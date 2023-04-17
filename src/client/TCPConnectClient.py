@@ -1,6 +1,5 @@
 from twisted.internet import reactor
-from twisted.internet.interfaces import IAddress
-from twisted.internet.protocol import Protocol, ClientFactory, ReconnectingClientFactory
+from twisted.internet.protocol import Protocol, ReconnectingClientFactory
 
 
 class ClientProtocol(Protocol):
